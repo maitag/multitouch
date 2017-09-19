@@ -37,11 +37,11 @@ class Touchable extends Sprite
 	
 	public function onTouchStart (touch:Touch):Void {
 		
-		// TODO: serialize SimpleList-append to prevent race conditions ;)
 		Touchable.fromIdTouch.set( touch.id, touchpoints.append(touch) );
 		
-		trace(touchpoints.length );
+		// ringbuffer like (if more then max delete one from start of list)
 		if (touchpoints.length > tp_max) {
+			Touchable.fromIdTouch[touchpoints.first.node.id] = null;
 			touchpoints.unlink(touchpoints.first);
 			startX = x - touchpoints.first.node.dx;
 			startY = y - touchpoints.first.node.dy;
@@ -51,35 +51,31 @@ class Touchable extends Sprite
 			startX = x;
 			startY = y;
 		}
-				
+		debugTouchpointList(touchpoints);
 	}
 
 	public function onTouchMove (touch:Touch):Void {
 		
-		Touchable.fromIdTouch[touch.id].node = touch;
-		
-		update(); // or call from onUpdate Event!
+		if (Touchable.fromIdTouch[touch.id] != null)
+		{
+			Touchable.fromIdTouch[touch.id].node = touch;
+			update(); // or call from onUpdate Event!
+		}
 		
 	}
 
 	public function onTouchEnd (touch:Touch):Void {
 		
-		if ( touch.id == touchpoints.first.node.id ) {
-			
-			// TODO: serialize SimpleList-unlink to prevent race conditions ;)
-			touchpoints.unlink(touchpoints.first);
-
-			if (touchpoints.first != null)
-			{
-				startX = x - touchpoints.first.node.dx;
-				startY = y - touchpoints.first.node.dy;		
+		if (Touchable.fromIdTouch[touch.id] != null)
+		{
+			if ( touch.id == touchpoints.first.node.id && touchpoints.first.next != null ) {
+				startX = x - touchpoints.first.next.node.dx;
+				startY = y - touchpoints.first.next.node.dy;
 			}
-		}
-		else {
-			// TODO: serialize SimpleList-unlink to prevent race conditions ;)
 			touchpoints.unlink(Touchable.fromIdTouch[touch.id]);
 		}
 		
+		debugTouchpointList(touchpoints);
 	}
 	
 	
@@ -99,4 +95,14 @@ class Touchable extends Sprite
 		
 	}
 
+	public function debugTouchpointList(touchpoints:SimpleList<Touch>) {
+		var node = touchpoints.first;
+		var out = "";
+		while (node != null) {
+			out += "->" + node.node.id;
+			node = node.next;
+		}
+		trace(out);
+	}
+	
 }

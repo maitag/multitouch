@@ -18,6 +18,7 @@ class SimpleList<T>
 	public function new()
 	{
 		first = null;
+		last = null;
 	}
 	
 	inline public function prepend(newnode:T):SimpleListNode<T>
@@ -45,6 +46,7 @@ class SimpleList<T>
 
 	inline public function unlink(node:SimpleListNode<T>):SimpleListNode<T>
 	{
+		//if (node.dll == null) return null;
 		length--;
 		if (node == first)
 		{
@@ -67,6 +69,7 @@ class SimpleList<T>
 				last = node.prev;
 			}
 		}
+		//node.dll = null;
 		return node.next;
 	}
 

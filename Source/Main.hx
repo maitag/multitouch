@@ -84,14 +84,14 @@ class Main extends Application {
 	
 	public override function onTouchEnd (touch:Touch):Void {
 		
-		trace('onTouchEnd: device=${touch.device}, id=${touch.id}, dx=${touch.dx}, dy=${touch.dy}');
+		trace('+onTouchEnd: device=${touch.device}, id=${touch.id}, dx=${touch.dx}, dy=${touch.dy}');
 		
 		var touched:Touchable = Touchable.fromId[touch.id];
 		if (touched != null) {
 			Touchable.fromId[touch.id] = null;
 			touched.onTouchEnd(touch);
 		}
-		
+
 	}
 	
 	
