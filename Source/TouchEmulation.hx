@@ -2,6 +2,8 @@ package;
 
 import lime.ui.Window;
 import lime.ui.Touch;
+import openfl.text.TextField;
+import openfl.text.TextFieldAutoSize;
 
 import openfl.display.Sprite;
 import openfl.geom.Point;
@@ -20,6 +22,9 @@ class TouchEmulation extends Sprite
 	var idState:Array<Bool>;
 	var radius:Float;
 	var device:Int;
+	
+	var lastX:Float;
+	var lastY:Float;
 	
 	// callbacks
 	var touchStart:Touch->Void;
@@ -49,10 +54,11 @@ class TouchEmulation extends Sprite
 	public function onMouseDown (window:Window, x:Float, y:Float, button:Int):Void {
 		
 		moved = false;
+		lastX = lastY = 0.0;
 		touchpoint = cast getObjectsUnderPoint(new Point(x, y))[0];
 		if (touchpoint == null) {
 			touchpoint = addTouchPoint(x, y);
-			touchStart( new Touch(x, y, touchpoint.id, 0, 0, 1.0, 1) );
+			touchStart( new Touch(x/window.width, y/window.height, touchpoint.id, 0.0, 0.0, 1.0, device) );
 		}
 		
 	}
@@ -61,9 +67,9 @@ class TouchEmulation extends Sprite
 
 		if (touchpoint != null) {
 			moved = true;
-			touchpoint.x = x;
-			touchpoint.y = y;
-			touchMove( new Touch(x, y, touchpoint.id, touchpoint.dx, touchpoint.dy, 1.0, -1) );
+			touchpoint.x = lastX = x;
+			touchpoint.y = lastY = y;
+			touchMove( new Touch(x/window.width, y/window.height, touchpoint.id, (x-lastX)/window.width, (y-lastY)/window.height, 1.0, device) );
 		}
 		
 	}
@@ -71,7 +77,7 @@ class TouchEmulation extends Sprite
 	public function onMouseUp (window:Window, x:Float, y:Float, button:Int):Void {
 		
 		if (moved == false) {
-			touchEnd( new Touch(x, y, touchpoint.id, touchpoint.dx, touchpoint.dy, 1.0, -1) );
+			touchEnd( new Touch(x/window.width, y/window.height, touchpoint.id, (x-lastX)/window.width, (y-lastY)/window.height, 1.0, device) );
 			delTouchPoint(touchpoint);
 		}
 		touchpoint = null;
@@ -84,10 +90,9 @@ class TouchEmulation extends Sprite
 	 */ 	
 	function addTouchPoint(x:Float, y:Float):TouchPoint
 	{
-		var tp = new TouchPoint (x, y, radius);
+		var tp = new TouchPoint (x, y, idState.indexOf(false), radius);
 		addChild (tp);
 		
-		tp.id = idState.indexOf(false);
 		idState[tp.id] = true;
 		
 		return (tp);
@@ -116,18 +121,26 @@ class TouchEmulation extends Sprite
 class TouchPoint extends Sprite
 {
 	public var id:Int;
-	public var startX:Float;
-	public var startY:Float;
 	
-	public var dx(get, null):Float;
-	function get_dx():Float { return x - startX; } // dx getter
-	
-	public var dy(get, null):Float;
-	function get_dy():Float { return y - startY; } // dy getter
-	
-	public function new (x:Float, y:Float, radius:Float) {
+	public function new (x:Float, y:Float, id:Int, radius:Float) {
 
 		super ();
+
+		this.id = id;
+		this.x = x;
+		this.y = y;
+				
+		var idText = new TextField();
+		idText.selectable = false;
+		idText.autoSize = TextFieldAutoSize.CENTER;
+		idText.multiline = false;
+		idText.width = idText.height = 1;
+		idText.scaleX = idText.scaleY = 1.5;
+		idText.textColor = 0x555555;
+		idText.text = id;
+		idText.x = - radius * 0.2;
+		idText.y = - radius * 0.9;
+		addChild (idText);
 
 		//graphics.beginFill (0xBFFF00);
 		graphics.lineStyle(1, 0xE03010);
@@ -142,8 +155,6 @@ class TouchPoint extends Sprite
 		graphics.lineGradientStyle(GradientType.LINEAR, [0xFF0000, 0x00FF00, 0x0000FF, 0xFF0000], [0.5, 0.5, 0.5, 0.5], [0, 96, 192, 255], matrix);
 		graphics.drawCircle(0, 0, radius);
 		
-		this.x = startX = x;
-		this.y = startY = y;
 	}
 	
 }

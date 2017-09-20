@@ -3,8 +3,11 @@ package;
 import lime.app.Application;
 import lime.app.Config;
 import lime.graphics.RenderContext;
+import lime.ui.KeyCode;
+import lime.ui.KeyModifier;
 import lime.ui.Window;
 import lime.ui.Touch;
+import openfl.text.TextField;
 
 import openfl.display.Stage;
 import openfl.display.Sprite;
@@ -13,7 +16,8 @@ import openfl.geom.Point;
 class Main extends Application {
 	
 	var touchables:Sprite;
-	var touchEmulation:TouchEmulation;	
+	var touchEmulation:TouchEmulation;
+	var touchEmulationEnabled:Bool = false;
 	
 	public function new () {
 		
@@ -25,13 +29,21 @@ class Main extends Application {
 		
 		super.create (config);
 		
-		
 		var stage = new Stage (window, 0xFFFFFF);
+		
+		var helpText = new TextField();
+		helpText.width = window.width;
+		helpText.height = 100;
+		helpText.scaleX = helpText.scaleY = 2;
+		helpText.text = 'press "m" to start touchdevice-emulation with mouse:\n - add/drag touchpoint with mouse+drag\n - remove touchpoint with single click';
+		stage.addChild (helpText);
+		
 		touchables = new Sprite ();
 		stage.addChild (touchables);
 		
-		touchables.addChild ( new Touchable (100, 100, 200, 300, 0xEE9910) );
-		touchables.addChild ( new Touchable (350, 100, 200, 200, 0x1419ab) );
+		touchables.addChild ( new Touchable (window, 0, 100, 350, 400, 0xEE9910) );
+		touchables.addChild ( new Touchable (window, 300, 250, 300, 300, 0x1419ab) );
+		touchables.addChild ( new Touchable (window, 100, 480, 450, 350, 0x14ab11) );
 				
 		touchEmulation = new TouchEmulation(onTouchStart, onTouchMove, onTouchEnd, Touchable.maxTouchpoints);
 		stage.addChild(touchEmulation);
@@ -44,15 +56,18 @@ class Main extends Application {
 	 * 
 	 */
 	public override function onMouseDown (window:Window, x:Float, y:Float, button:Int):Void {
-		touchEmulation.onMouseDown(window, x, y, button);		
+		//trace('onMouseDown: x=${x}, y=${y}, button=${button}'); 
+		if (touchEmulationEnabled) touchEmulation.onMouseDown(window, x, y, button);		
 	}
 	
 	public override function onMouseMove (window:Window, x:Float, y:Float):Void {
-		touchEmulation.onMouseMove(window, x, y);
+		//trace('onMouseMove: x=${x}, y=${y}'); 
+		if (touchEmulationEnabled) touchEmulation.onMouseMove(window, x, y);
 	}
 	
 	public override function onMouseUp (window:Window, x:Float, y:Float, button:Int):Void {
-		touchEmulation.onMouseUp(window, x, y, button);
+		//trace('onMouseUp: x=${x}, y=${y}, button=${button}');
+		if (touchEmulationEnabled) touchEmulation.onMouseUp(window, x, y, button);
 	}
 	
 	/*
@@ -61,9 +76,11 @@ class Main extends Application {
 	 */
 	public override function onTouchStart (touch:Touch):Void {
 		
-		trace('onTouchStart: device=${touch.device}, id=${touch.id}, dx=${touch.dx}, dy=${touch.dy}');
-
-		var touched:Touchable = cast touchables.getObjectsUnderPoint(new Point(touch.x, touch.y))[0];
+		trace('+onTouchStart: device=${touch.device}, id=${touch.id}, x=${touch.x}, y=${touch.y}, dx=${touch.dx}, dy=${touch.dy}');
+		
+		var picked = touchables.getObjectsUnderPoint(new Point(touch.x * window.width, touch.y * window.height));
+		
+		var touched:Touchable = cast picked[picked.length-1];
 		if (touched != null) {
 			Touchable.fromId[touch.id] = touched;
 			touched.onTouchStart(touch);
@@ -73,7 +90,7 @@ class Main extends Application {
 		
 	public override function onTouchMove (touch:Touch):Void {
 		
-		//trace('onTouchMove: device=${touch.device}, id=${touch.id}, dx=${touch.dx}, dy=${touch.dy}');
+		//trace(' onTouchMove: device=${touch.device}, id=${touch.id}, x=${touch.x}, y=${touch.y}, dx=${touch.dx}, dy=${touch.dy}');
 		
 		var touched:Touchable = Touchable.fromId[touch.id];
 		if (touched != null) {
@@ -84,7 +101,7 @@ class Main extends Application {
 	
 	public override function onTouchEnd (touch:Touch):Void {
 		
-		trace('+onTouchEnd: device=${touch.device}, id=${touch.id}, dx=${touch.dx}, dy=${touch.dy}');
+		trace('-onTouchEnd: device=${touch.device}, id=${touch.id}, x=${touch.x}, y=${touch.y}, dx=${touch.dx}, dy=${touch.dy}');
 		
 		var touched:Touchable = Touchable.fromId[touch.id];
 		if (touched != null) {
@@ -94,7 +111,16 @@ class Main extends Application {
 
 	}
 	
-	
+	public override function onKeyUp (window:Window, key:KeyCode, modifier:KeyModifier):Void {
+		
+		switch (key) {
+			
+			case KeyCode.M: touchEmulationEnabled = true;
+			default:
+			
+		};
+		
+	}	
 }
 
 

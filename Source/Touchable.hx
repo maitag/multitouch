@@ -3,6 +3,7 @@ package;
 import haxe.ds.Vector;
 import openfl.display.Sprite;
 import lime.ui.Touch;
+import lime.ui.Window;
 
 /**
  * Helper Class to store touchpoints per Sprite into a linked List
@@ -13,19 +14,31 @@ class Touchable extends Sprite
 {
 	public static var maxTouchpoints:Int = 100;
 	public static var fromId = new Vector<Touchable>(maxTouchpoints);
-	public static var fromIdTouch = new Vector<SimpleListNode<Touch>>(maxTouchpoints);
+	public static var fromIdTouch = new Vector<SimpleListNode<TouchDelta>>(maxTouchpoints);
 
-	var startX:Float;
-	var startY:Float;
+	public var window:Window;
+	
+	public var xRel(get, set):Float;
+	public function get_xRel():Float { return this.x / window.width; };
+	public function set_xRel(x:Float):Float { return this.x = x * window.width; };
+	
+	public var yRel(get, set):Float;
+	public function get_yRel():Float { return this.y / window.height; };
+	public function set_yRel(y:Float):Float { return this.y = y * window.height; };
+	
+	var xRelStart:Float;
+	var yRelStart:Float;
 
-	var touchpoints:SimpleList<Touch>;
+	var touchpoints:SimpleList<TouchDelta>;
 	var tp_max:Int = 3;
 	
-	public function new (x:Int, y:Int, width:Float, height:Float, color:Int ) {
+	public function new (window:Window, x:Int, y:Int, width:Float, height:Float, color:Int ) {
 
 		super ();
 		
-		touchpoints = new SimpleList<Touch>();
+		this.window = window;
+		
+		touchpoints = new SimpleList<TouchDelta>();
 		
 		graphics.beginFill (color);
 		graphics.drawRect (0, 0, width, height);
@@ -34,22 +47,21 @@ class Touchable extends Sprite
 		this.y = y;
 	}
 	
-	
 	public function onTouchStart (touch:Touch):Void {
 		
-		Touchable.fromIdTouch.set( touch.id, touchpoints.append(touch) );
+		Touchable.fromIdTouch.set( touch.id, touchpoints.append(new TouchDelta(touch)) );
 		
-		// ringbuffer like (if more then max delete one from start of list)
+		// ringbuffer (delete from start of list if maximum reached)
 		if (touchpoints.length > tp_max) {
 			Touchable.fromIdTouch[touchpoints.first.node.id] = null;
 			touchpoints.unlink(touchpoints.first);
-			startX = x - touchpoints.first.node.dx;
-			startY = y - touchpoints.first.node.dy;
+			xRelStart = xRel - touchpoints.first.node.deltaX;
+			yRelStart = yRel - touchpoints.first.node.deltaY;
 		}
 
 		if (touchpoints.length == 1) {
-			startX = x;
-			startY = y;
+			xRelStart = xRel;
+			yRelStart = yRel;
 		}
 		debugTouchpointList(touchpoints);
 	}
@@ -58,7 +70,7 @@ class Touchable extends Sprite
 		
 		if (Touchable.fromIdTouch[touch.id] != null)
 		{
-			Touchable.fromIdTouch[touch.id].node = touch;
+			Touchable.fromIdTouch[touch.id].node.update(touch);
 			update(); // or call from onUpdate Event!
 		}
 		
@@ -69,8 +81,8 @@ class Touchable extends Sprite
 		if (Touchable.fromIdTouch[touch.id] != null)
 		{
 			if ( touch.id == touchpoints.first.node.id && touchpoints.first.next != null ) {
-				startX = x - touchpoints.first.next.node.dx;
-				startY = y - touchpoints.first.next.node.dy;
+				xRelStart = xRel - touchpoints.first.next.node.deltaX;
+				yRelStart = yRel - touchpoints.first.next.node.deltaY;
 			}
 			touchpoints.unlink(Touchable.fromIdTouch[touch.id]);
 		}
@@ -89,13 +101,13 @@ class Touchable extends Sprite
 			//case 1:
 			//case 2:
 			default:
-				x = startX + touchpoints.first.node.dx;
-				y = startY + touchpoints.first.node.dy;
+				xRel = xRelStart + touchpoints.first.node.deltaX;
+				yRel = yRelStart + touchpoints.first.node.deltaY;
 		}
 		
 	}
 
-	public function debugTouchpointList(touchpoints:SimpleList<Touch>) {
+	public function debugTouchpointList(touchpoints:SimpleList<TouchDelta>) {
 		var node = touchpoints.first;
 		var out = "";
 		while (node != null) {
