@@ -55,12 +55,16 @@ class TouchEmulation extends Sprite
 		
 		moved = false;
 		lastX = lastY = 0.0;
-		touchpoint = cast getObjectsUnderPoint(new Point(x, y))[0];
+		//touchpoint = cast getObjectsUnderPoint(new Point(x, y))[0];
+		var obj = getObjectsUnderPoint(new Point(x, y))[0];
+		if (obj != null) {
+			if (Type.getClassName(Type.getClass(obj)) == "TouchPoint") touchpoint = cast obj;
+			else if (Type.getClassName(Type.getClass(obj)) == "openfl.text.TextField") touchpoint = cast obj.parent;
+		}
 		if (touchpoint == null) {
 			touchpoint = addTouchPoint(x, y);
 			touchStart( new Touch(x/window.width, y/window.height, touchpoint.id, 0.0, 0.0, 1.0, device) );
 		}
-		
 	}
 	
 	public function onMouseMove (window:Window, x:Float, y:Float):Void {
@@ -129,6 +133,8 @@ class TouchPoint extends Sprite
 		this.id = id;
 		this.x = x;
 		this.y = y;
+		
+		//cacheAsBitmap = true;
 				
 		var idText = new TextField();
 		idText.selectable = false;

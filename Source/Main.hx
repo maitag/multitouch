@@ -1,7 +1,6 @@
 package;
 
 import lime.app.Application;
-import lime.app.Config;
 import lime.graphics.RenderContext;
 import lime.ui.KeyCode;
 import lime.ui.KeyModifier;
@@ -25,9 +24,9 @@ class Main extends Application {
 	}
 	
 	
-	public override function create (config:Config):Void {
+	public override function onWindowCreate():Void {
 		
-		super.create (config);
+		#if !flash
 		
 		var stage = new Stage (window, 0xFFFFFF);
 		
@@ -35,7 +34,7 @@ class Main extends Application {
 		helpText.width = window.width;
 		helpText.height = 100;
 		helpText.scaleX = helpText.scaleY = 2;
-		helpText.text = 'press "m" to start touchdevice-emulation with mouse:\n - add/drag touchpoint with mouse+drag\n - remove touchpoint with single click';
+		helpText.text = 'press "m" to start touch-emulation with mouse:\n - add/drag touchpoint with mouse+drag\n - remove touchpoint with single click';
 		stage.addChild (helpText);
 		
 		touchables = new Sprite ();
@@ -49,23 +48,25 @@ class Main extends Application {
 		stage.addChild(touchEmulation);
 
 		addModule (stage);
+		
+		#end
 	}
 	
 	/*
 	 * forwards global mouse-events to touchEmulation
 	 * 
 	 */
-	public override function onMouseDown (window:Window, x:Float, y:Float, button:Int):Void {
+	public override function onMouseDown (x:Float, y:Float, button:Int):Void {
 		//trace('onMouseDown: x=${x}, y=${y}, button=${button}'); 
 		if (touchEmulationEnabled) touchEmulation.onMouseDown(window, x, y, button);		
 	}
 	
-	public override function onMouseMove (window:Window, x:Float, y:Float):Void {
+	public override function onMouseMove (x:Float, y:Float):Void {
 		//trace('onMouseMove: x=${x}, y=${y}'); 
 		if (touchEmulationEnabled) touchEmulation.onMouseMove(window, x, y);
 	}
 	
-	public override function onMouseUp (window:Window, x:Float, y:Float, button:Int):Void {
+	public override function onMouseUp (x:Float, y:Float, button:Int):Void {
 		//trace('onMouseUp: x=${x}, y=${y}, button=${button}');
 		if (touchEmulationEnabled) touchEmulation.onMouseUp(window, x, y, button);
 	}
@@ -111,7 +112,7 @@ class Main extends Application {
 
 	}
 	
-	public override function onKeyUp (window:Window, key:KeyCode, modifier:KeyModifier):Void {
+	public override function onKeyUp (key:KeyCode, modifier:KeyModifier):Void {
 		
 		switch (key) {
 			
