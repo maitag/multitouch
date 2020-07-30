@@ -1,4 +1,4 @@
 # multitouch
-sample how to handle multitouch with haxe and lime
+sample how to handle and emulate multitouch with haxe and openfl
 
-(in progress)
+(work in progress)

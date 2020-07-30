@@ -143,7 +143,7 @@ class TouchPoint extends Sprite
 		idText.width = idText.height = 1;
 		idText.scaleX = idText.scaleY = 1.5;
 		idText.textColor = 0x555555;
-		idText.text = id;
+		idText.text = '$id';
 		idText.x = - radius * 0.2;
 		idText.y = - radius * 0.9;
 		addChild (idText);
